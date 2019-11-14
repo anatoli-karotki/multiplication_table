@@ -1,7 +1,6 @@
 package com.anatolik.mtable;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static com.anatolik.mtable.Settings.*;
 
@@ -10,40 +9,59 @@ public class Test {
     private int complexity;
     private long testStart;
     private double score;
-    private int numberOfQuestions;
-    private Map<String, Integer> wrongAnswers;
+    private int askedQuestions;
+    private Map<String, Integer> taskMap = new HashMap<>();
+    private Map<String, Integer> wrongAnswers = new HashMap<>();
+    private List<String> questions;
+    int pointer;
 
     public Test(int complexity) {
         this.complexity = complexity;
     }
 
     private void init() {
+        initQuestions();
         testStart = System.currentTimeMillis();
-        score = 0;
-        numberOfQuestions = 0;
-        wrongAnswers = new HashMap<>();
+    }
+
+    private void initQuestions() {
+        initTasks();
+        Set<String> set = taskMap.keySet();
+        questions = new ArrayList<>(set);
+        Collections.shuffle(questions);
+    }
+
+    private void initTasks() {
+        for (int i = 2; i <= 9; i++) {
+            for (int j = 2; j <= complexity; j++) {
+                String task = j + " x " + i + " = ";
+                int answer = i * j;
+                taskMap.put(task, answer);
+            }
+        }
     }
 
     public void perform() {
         init();
         while (toContinue()) {
-            numberOfQuestions++;
-            Task task = Task.getNewTask(complexity);
+            askedQuestions++;
             long start = System.currentTimeMillis();
-            int answer = ConsoleReader.askQuestion(task.getQuestion());
+            String question = questions.get(pointer);
+            int answer = ConsoleReader.askQuestion(question);
             long delta = System.currentTimeMillis() - start;
-            if (task.checkResult(answer)) {
+            if (taskMap.get(question) == answer) {
                 score += BASE_DELTA / delta;
             } else {
                 score -= delta / BASE_DELTA;
-                wrongAnswers.put(task.getQuestion(), answer);
+                wrongAnswers.put(question, answer);
             }
+            pointer++;
         }
-        ConsoleReader.printResult(new Result(numberOfQuestions, getResultScore(), wrongAnswers));
+        ConsoleReader.printResult(new Result(askedQuestions, getResultScore(), wrongAnswers));
     }
 
     private boolean toContinue() {
-        return System.currentTimeMillis() - testStart < TEST_TIME;
+        return (System.currentTimeMillis() - testStart < TEST_TIME) && pointer < questions.size();
     }
 
 
