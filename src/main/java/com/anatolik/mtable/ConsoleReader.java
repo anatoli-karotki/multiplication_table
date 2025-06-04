@@ -26,6 +26,7 @@ public class ConsoleReader {
 
     public static int askQuestion(String question) {
         System.out.println(question);
+
         return getIntAnswer();
     }
 
